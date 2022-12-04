@@ -1,0 +1,98 @@
+# Day 3 Part 2
+
+```elixir
+Mix.install([])
+```
+
+## Part 2
+
+```elixir
+defmodule Day3Part2 do
+  def run(input) do
+    {santa_path, robot_path} =
+      input
+      |> String.graphemes()
+      |> Enum.reduce({{"", ""}, 0}, fn current_direction,
+                                       {{santa_path, robot_path}, current_number} ->
+        case rem(current_number, 2) do
+          0 ->
+            {{santa_path <> current_direction, robot_path}, current_number + 1}
+
+          _ ->
+            {{santa_path, robot_path <> current_direction}, current_number + 1}
+        end
+      end)
+      |> elem(0)
+
+    initial_visited_houses = MapSet.new([{0, 0}])
+
+    {_santa_final_position, visited_houses} =
+      process_santa_path(santa_path, initial_visited_houses)
+
+    {_robot_final_position, visited_houses} = process_santa_path(robot_path, visited_houses)
+
+    MapSet.size(visited_houses)
+  end
+
+  defp process_santa_path(path, visited_houses) do
+    path
+    |> String.graphemes()
+    |> Enum.reduce({{0, 0}, visited_houses}, fn direction,
+                                                {{current_x, current_y}, visited_houses} ->
+      case direction do
+        "^" ->
+          new_position = {current_x, current_y - 1}
+          {new_position, MapSet.put(visited_houses, new_position)}
+
+        ">" ->
+          new_position = {current_x + 1, current_y}
+          {new_position, MapSet.put(visited_houses, new_position)}
+
+        "<" ->
+          new_position = {current_x - 1, current_y}
+          {new_position, MapSet.put(visited_houses, new_position)}
+
+        "v" ->
+          new_position = {current_x, current_y + 1}
+          {new_position, MapSet.put(visited_houses, new_position)}
+      end
+    end)
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day3Part2
+
+  test "examples" do
+    assert Day3Part2.run("^v") === 3
+    assert Day3Part2.run("^>v<") === 3
+    assert Day3Part2.run("^v^v^v^v^v") === 11
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day3Part2
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day3Part2.run(input)
+  end
+end
+
+Puzzle.run()
+```

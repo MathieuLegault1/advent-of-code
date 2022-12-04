@@ -1,0 +1,83 @@
+# Day 4 Part 2
+
+```elixir
+Mix.install([])
+```
+
+## Part 2
+
+```elixir
+defmodule Day4Part2 do
+  def run(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.filter(fn elf_pair ->
+      [elf_one, elf_two] = String.split(elf_pair, ",", trim: true)
+
+      elf_contains_in?(elf_one, elf_two) or elf_contains_in?(elf_two, elf_one)
+    end)
+    |> Enum.count()
+  end
+
+  defp elf_contains_in?(elf_one, elf_two) do
+    [elf_one_lower_bound, elf_one_upper_bound] = get_elf_bounds(elf_one)
+    [elf_two_lower_bound, elf_two_upper_bound] = get_elf_bounds(elf_two)
+
+    between?(elf_one_lower_bound, elf_two_lower_bound, elf_two_upper_bound) or
+      between?(elf_one_upper_bound, elf_two_lower_bound, elf_two_upper_bound)
+  end
+
+  defp get_elf_bounds(elf) do
+    elf
+    |> String.split("-", trim: true)
+    |> Enum.map(&String.to_integer/1)
+  end
+
+  defp between?(integer_one, integer_two, integer_three) do
+    integer_one >= integer_two and integer_three >= integer_one
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day4Part2
+
+  test "example" do
+    input = """
+    2-4,6-8
+    2-3,4-5
+    5-7,7-9
+    2-8,3-7
+    6-6,4-6
+    2-6,4-8
+    """
+
+    assert Day4Part2.run(input) === 4
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day4Part2
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day4Part2.run(input)
+  end
+end
+
+Puzzle.run()
+```

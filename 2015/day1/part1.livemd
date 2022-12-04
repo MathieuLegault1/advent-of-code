@@ -1,0 +1,68 @@
+# Day 1 Part 1
+
+```elixir
+Mix.install([])
+```
+
+## Part 1
+
+```elixir
+defmodule Day1Part1 do
+  def run(input) do
+    Enum.reduce(String.graphemes(input), 0, fn current_floor, acc ->
+      case current_floor do
+        "(" ->
+          acc + 1
+
+        ")" ->
+          acc - 1
+      end
+    end)
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day1Part1
+
+  test "examples" do
+    assert Day1Part1.run("(())") === 0
+    assert Day1Part1.run("()()") === 0
+
+    assert Day1Part1.run("(((") === 3
+    assert Day1Part1.run("(()(()(") === 3
+    assert Day1Part1.run("))(((((") === 3
+
+    assert Day1Part1.run("())") === -1
+    assert Day1Part1.run("))(") === -1
+
+    assert Day1Part1.run(")))") === -3
+    assert Day1Part1.run(")())())") === -3
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day1Part1
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day1Part1.run(input)
+  end
+end
+
+Puzzle.run()
+```

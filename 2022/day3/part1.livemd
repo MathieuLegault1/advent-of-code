@@ -1,0 +1,79 @@
+# Day 3 Part 1
+
+```elixir
+Mix.install([])
+```
+
+## Part 1
+
+```elixir
+defmodule Day3Part1 do
+  def run(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn backpack ->
+      String.split_at(backpack, div(String.length(backpack), 2))
+      |> find_duplicated_character()
+      |> character_priority()
+    end)
+    |> Enum.sum()
+  end
+
+  defp find_duplicated_character({first_compartiment, second_compartiment}) do
+    Enum.find(String.graphemes(first_compartiment), fn character ->
+      String.contains?(second_compartiment, character)
+    end)
+  end
+
+  defp character_priority(character) do
+    ascii_value = String.to_charlist(character) |> hd()
+
+    if String.upcase(character) === character,
+      do: ascii_value - 65 + 27,
+      else: ascii_value - 97 + 1
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day3Part1
+
+  test "example" do
+    input = """
+    vJrwpWtwJgWrhcsFMMfFFhFp
+    jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+    PmmdzqPrVvPwwTWBwg
+    wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+    ttgJtRGJQctTZtZT
+    CrZsJsPPZsGzwwsLwLmpwMDw
+    """
+
+    assert Day3Part1.run(input) === 157
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day3Part1
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day3Part1.run(input)
+  end
+end
+
+Puzzle.run()
+```

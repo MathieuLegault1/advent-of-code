@@ -1,0 +1,67 @@
+# Day 2 Part 1
+
+```elixir
+Mix.install([])
+```
+
+## Part 1
+
+```elixir
+defmodule Day2Part1 do
+  def run(input) do
+    String.split(input, "\n", trim: true)
+    |> Enum.map(fn dimensions ->
+      [length, width, height] = String.split(dimensions, "x") |> Enum.map(&String.to_integer/1)
+
+      area_of_box(length, width, height) + smallest_side_area(length, width, height)
+    end)
+    |> Enum.sum()
+    |> trunc()
+  end
+
+  defp area_of_box(length, width, height) do
+    2 * length * width + 2 * width * height + 2 * height * length
+  end
+
+  defp smallest_side_area(length, width, height) do
+    max = Enum.max([length, width, height])
+
+    length * width * height / max
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day2Part1
+
+  test "examples" do
+    assert Day2Part1.run("2x3x4") === 58
+    assert Day2Part1.run("1x1x10") === 43
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day2Part1
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day2Part1.run(input)
+  end
+end
+
+Puzzle.run()
+```

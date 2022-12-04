@@ -1,0 +1,74 @@
+# Day 1 Part 2
+
+## Part 2
+
+```elixir
+defmodule Day1Part2 do
+  def run(input) do
+    [calorie_one, calorie_two, calorie_three | _rest] =
+      input
+      |> String.split("\n")
+      |> Enum.chunk_by(fn line -> line !== "" end)
+      |> Enum.filter(fn group -> group != [""] end)
+      |> Enum.map(fn elf_calories ->
+        elf_calories
+        |> Enum.map(&String.to_integer/1)
+        |> Enum.sum()
+      end)
+      |> Enum.sort(:desc)
+
+    calorie_one + calorie_two + calorie_three
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day1Part2
+
+  test "example" do
+    input = """
+    1000
+    2000
+    3000
+
+    4000
+
+    5000
+    6000
+
+    7000
+    8000
+    9000
+
+    10000
+    """
+
+    assert Day1Part2.run(input) === 45000
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day1Part2
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day1Part2.run(input)
+  end
+end
+
+Puzzle.run()
+```

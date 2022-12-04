@@ -1,0 +1,81 @@
+# Day 3 Part 2
+
+```elixir
+Mix.install([])
+```
+
+## Part 2
+
+```elixir
+defmodule Day3Part2 do
+  def run(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.chunk_every(3)
+    |> Enum.map(fn backpacks ->
+      Enum.reduce(backpacks, %{}, &calculate_character_count/2)
+      |> Enum.find(fn {_key, count} -> count === 3 end)
+      |> elem(0)
+      |> character_priority()
+    end)
+    |> Enum.sum()
+  end
+
+  defp calculate_character_count(backpack, acc) do
+    Enum.reduce(String.graphemes(backpack) |> Enum.uniq(), acc, fn character, acc_backpack ->
+      Map.update(acc_backpack, character, 1, &(&1 + 1))
+    end)
+  end
+
+  defp character_priority(character) do
+    ascii_value = String.to_charlist(character) |> hd()
+
+    if String.upcase(character) === character,
+      do: ascii_value - 65 + 27,
+      else: ascii_value - 97 + 1
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day3Part2
+
+  test "example" do
+    input = """
+    vJrwpWtwJgWrhcsFMMfFFhFp
+    jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+    PmmdzqPrVvPwwTWBwg
+    wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+    ttgJtRGJQctTZtZT
+    CrZsJsPPZsGzwwsLwLmpwMDw
+    """
+
+    assert Day3Part2.run(input) === 70
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day3Part2
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day3Part2.run(input)
+  end
+end
+
+Puzzle.run()
+```

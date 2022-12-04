@@ -1,0 +1,128 @@
+# Day 2 Part 2
+
+```elixir
+Mix.install([])
+```
+
+## Part 2
+
+```elixir
+defmodule Day2Part2 do
+  @lose_score 0
+  @draw_score 3
+  @win_score 6
+
+  @shapes %{
+    "A" => :rock,
+    "B" => :paper,
+    "C" => :scissor
+  }
+
+  @lose_result "X"
+  @draw_result "Y"
+  @win_result "Z"
+
+  def run(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn <<opponent_shape_character::binary-size(1), " ",
+                     match_result_character::binary-size(1)>> ->
+      opponent_shape = Map.get(@shapes, opponent_shape_character)
+      my_shape = determine_shape(opponent_shape, match_result_character)
+
+      match_score(my_shape, opponent_shape) + shape_score(my_shape)
+    end)
+    |> Enum.sum()
+  end
+
+  defp match_score(opponent_shape, my_shape) do
+    case {opponent_shape, my_shape} do
+      {shape, shape} ->
+        @draw_score
+
+      {:rock, :scissor} ->
+        @win_score
+
+      {:paper, :rock} ->
+        @win_score
+
+      {:scissor, :paper} ->
+        @win_score
+
+      _match ->
+        @lose_score
+    end
+  end
+
+  defp shape_score(:rock), do: 1
+  defp shape_score(:paper), do: 2
+  defp shape_score(:scissor), do: 3
+
+  # Our shape is determined using an expected result. This means that if the expected 
+  # result should be a win and our opponent shape is a rock, we need to throw paper to win.
+  defp determine_shape(shape, match_result_character) do
+    case {shape, match_result_character} do
+      {shape, @draw_result} ->
+        shape
+
+      {:rock, @win_result} ->
+        :paper
+
+      {:rock, @lose_result} ->
+        :scissor
+
+      {:paper, @win_result} ->
+        :scissor
+
+      {:paper, @lose_result} ->
+        :rock
+
+      {:scissor, @win_result} ->
+        :rock
+
+      {:scissor, @lose_result} ->
+        :paper
+    end
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day2Part2
+
+  test "example" do
+    input = """
+    A Y
+    B X
+    C Z
+    """
+
+    assert Day2Part2.run(input) === 12
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day2Part2
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day2Part2.run(input)
+  end
+end
+
+Puzzle.run()
+```
