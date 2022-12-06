@@ -1,0 +1,117 @@
+# Day 5 Part 2
+
+```elixir
+Mix.install([])
+```
+
+## Part 2
+
+```elixir
+defmodule Day5Part2 do
+  # I should have used regexes...
+
+  def run(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.filter(fn string ->
+      first_condition(string) and
+        second_condition(string)
+    end)
+    |> length()
+  end
+
+  defp first_condition(string) do
+    String.graphemes(string)
+    |> Enum.with_index()
+    |> Enum.reduce({nil, %{}}, fn {character, index}, {previous_character, permutations} ->
+      case previous_character do
+        nil ->
+          {character, permutations}
+
+        previous_character ->
+          duo_character = previous_character <> character
+
+          if existing_item = Map.get(permutations, duo_character) do
+            if index - 1 === elem(existing_item, 1),
+              do: {character, permutations},
+              else:
+                {character,
+                 Map.update!(permutations, duo_character, fn {count, _last_index} ->
+                   {count + 1, index}
+                 end)}
+          else
+            {character, Map.put(permutations, duo_character, {1, index})}
+          end
+      end
+    end)
+    |> elem(1)
+    |> Enum.any?(fn {_key, {count, _last_index}} -> count >= 2 end)
+  end
+
+  defp second_condition(string) do
+    Enum.reduce(String.graphemes(string), {{nil, nil}, []}, fn character,
+                                                               {{first_character,
+                                                                 second_character}, acc} ->
+      cond do
+        is_nil(first_character) ->
+          {{character, nil}, acc}
+
+        is_nil(second_character) ->
+          {{first_character, character}, acc}
+
+        true ->
+          {{second_character, character},
+           acc ++ [first_character <> second_character <> character]}
+      end
+    end)
+    |> elem(1)
+    |> Enum.any?(fn three_characters ->
+      case three_characters do
+        <<character::binary-size(1), _between::binary-size(1), character::binary-size(1)>> ->
+          true
+
+        _ ->
+          false
+      end
+    end)
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day5Part2
+
+  test "examples" do
+    assert Day5Part2.run("qjhvhtzxzqqjkmpb") === 1
+    assert Day5Part2.run("xxyxx") === 1
+
+    assert Day5Part2.run("uurcxstgmygtbstg") === 0
+    assert Day5Part2.run("ieodomkazucvgmuy") === 0
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day5Part2
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day5Part2.run(input)
+  end
+end
+
+Puzzle.run()
+```
