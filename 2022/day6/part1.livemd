@@ -1,0 +1,71 @@
+# Day 6 Part 1
+
+```elixir
+Mix.install([])
+```
+
+## Part 1
+
+```elixir
+defmodule Day6Part1 do
+  def run(input) do
+    input_characters = String.graphemes(input)
+
+    Enum.reduce_while(input_characters, 0, fn _character, current_index ->
+      characters = Enum.slice(input_characters, current_index..(current_index + 3))
+
+      if are_all_different?(characters) do
+        {:halt, current_index + 4}
+      else
+        {:cont, current_index + 1}
+      end
+    end)
+  end
+
+  def are_all_different?(characters) do
+    unique_characters_count =
+      characters
+      |> Enum.uniq()
+      |> length()
+
+    unique_characters_count === 4
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day6Part1
+
+  test "example" do
+    assert Day6Part1.run("bvwbjplbgvbhsrlpgdmjqwftvncz") === 5
+    assert Day6Part1.run("nppdvjthqldpwncqszvftbrmjlhg") === 6
+    assert Day6Part1.run("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg") === 10
+    assert Day6Part1.run("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw") === 11
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day6Part1
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day6Part1.run(input)
+  end
+end
+
+Puzzle.run()
+```
