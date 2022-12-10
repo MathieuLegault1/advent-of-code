@@ -1,0 +1,129 @@
+# Day 9 Part 2
+
+```elixir
+Mix.install([])
+```
+
+## Part 1
+
+```elixir
+defmodule Day9Part2 do
+  def run(input) do
+    tail_positions = repeat_value(9, {0, 0})
+    head_position = {0, 0}
+
+    input
+    |> String.split("\n", trim: true)
+    |> execute_moves(head_position, tail_positions, MapSet.new([{0, 0}]))
+    |> MapSet.size()
+  end
+
+  defp execute_moves(
+         [current_move | rest_moves],
+         head_position,
+         tail_positions,
+         visited_tail_positions
+       ) do
+    [move_direction, move_count] = String.split(current_move, " ")
+    moves = repeat_value(String.to_integer(move_count), move_direction)
+
+    {head_position, tail_positions, visited_tail_positions} =
+      Enum.reduce(moves, {head_position, tail_positions, visited_tail_positions}, fn move,
+                                                                                     {head_position,
+                                                                                      tail_positions,
+                                                                                      visited_tail_positions} ->
+        head_position = execute_head_move(head_position, move)
+        tail_positions = execute_tails_move(head_position, tail_positions)
+        tail_position = List.last(tail_positions)
+
+        visited_tail_positions = MapSet.put(visited_tail_positions, tail_position)
+
+        {head_position, tail_positions, visited_tail_positions}
+      end)
+
+    execute_moves(rest_moves, head_position, tail_positions, visited_tail_positions)
+  end
+
+  defp execute_moves([], _head_position, _tail_positions, visited_tail_positions) do
+    visited_tail_positions
+  end
+
+  defp execute_head_move(head_position, move_direction) do
+    execute_move(head_position, move_direction)
+  end
+
+  defp execute_tails_move(head_position, tail_positions) do
+    Enum.scan(tail_positions, head_position, fn {tail_x, tail_y}, {previous_x, previous_y} ->
+      real_diff_x = previous_x - tail_x
+      real_diff_y = previous_y - tail_y
+
+      if adjacent?(real_diff_x, real_diff_y) do
+        {tail_x, tail_y}
+      else
+        diff_x = max(min(previous_x - tail_x, 1), -1)
+        diff_y = max(min(previous_y - tail_y, 1), -1)
+
+        {tail_x + diff_x, tail_y + diff_y}
+      end
+    end)
+  end
+
+  defp adjacent?(diff_x, diff_y) do
+    diff_x <= 1 and diff_y <= 1 and diff_x >= -1 and diff_y >= -1
+  end
+
+  defp execute_move({x, y}, "U"), do: {x, y + 1}
+  defp execute_move({x, y}, "D"), do: {x, y - 1}
+  defp execute_move({x, y}, "L"), do: {x - 1, y}
+  defp execute_move({x, y}, "R"), do: {x + 1, y}
+
+  defp repeat_value(number_of_times, value) do
+    Enum.map(0..(number_of_times - 1), fn _index -> value end)
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day9Part2
+
+  test "example" do
+    input = """
+    R 5
+    U 8
+    L 8
+    D 3
+    R 17
+    D 10
+    L 25
+    U 20
+    """
+
+    assert Day9Part2.run(input) === 36
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day9Part2
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day9Part2.run(input)
+  end
+end
+
+Puzzle.run()
+```

@@ -1,0 +1,204 @@
+# Day 7 Part 2
+
+```elixir
+Mix.install([])
+```
+
+## Part 2
+
+```elixir
+defmodule Day7Part2 do
+  @disk_size 70_000_000
+  @update_size 30_000_000
+  def run(input) do
+    directories =
+      input
+      |> String.split("\n", trim: true)
+      |> handle_commands([], %{})
+
+    free_space = @disk_size - calculate_size(directories, 0)
+    required_freed_memory_amount = @update_size - free_space
+
+    get_big_directories(directories, [], "", required_freed_memory_amount)
+    |> Enum.map(fn {_directory_name, size} -> size end)
+    |> Enum.min()
+  end
+
+  defp handle_commands(lines, current_path, directories) do
+    command = List.first(lines)
+
+    {remaining_lines, current_path, directories} =
+      execute_command(command, lines, current_path, directories)
+
+    if Enum.empty?(remaining_lines) do
+      directories
+    else
+      handle_commands(remaining_lines, current_path, directories)
+    end
+  end
+
+  defp execute_command("$ cd " <> cd_path, lines, current_path, directories) do
+    lines = Enum.drop(lines, 1)
+
+    case cd_path do
+      "/" ->
+        {lines, [], directories}
+
+      ".." ->
+        {lines, Enum.drop(current_path, -1), directories}
+
+      path ->
+        {
+          lines,
+          current_path ++ [path],
+          cd_directories(directories, current_path, path)
+        }
+    end
+  end
+
+  defp execute_command("$ ls", lines, current_path, directories) do
+    lines = Enum.drop(lines, 1)
+
+    directories =
+      lines
+      |> Enum.take_while(fn line -> !String.starts_with?(line, "$") end)
+      |> Enum.filter(fn line -> !String.starts_with?(line, "dir") end)
+      |> Enum.reduce(directories, fn line, directories ->
+        [size, file_name] = String.split(line, " ")
+
+        add_file(directories, current_path, file_name, size)
+      end)
+
+    remaining_lines = Enum.drop_while(lines, fn line -> !String.starts_with?(line, "$") end)
+
+    {remaining_lines, current_path, directories}
+  end
+
+  defp get_big_directories(
+         directories,
+         big_directories,
+         current_path,
+         required_freed_memory_amount
+       ) do
+    Enum.reduce(directories, big_directories, fn {directory_name, value}, big_directories ->
+      case value do
+        directory when is_map(directory) ->
+          size = calculate_size(directory, 0)
+
+          if size >= required_freed_memory_amount do
+            new_big_directories = big_directories ++ [{current_path <> directory_name, size}]
+
+            get_big_directories(
+              directory,
+              new_big_directories,
+              current_path <> directory_name,
+              required_freed_memory_amount
+            )
+          else
+            get_big_directories(
+              directory,
+              big_directories,
+              current_path <> directory_name,
+              required_freed_memory_amount
+            )
+          end
+
+        _size ->
+          big_directories
+      end
+    end)
+  end
+
+  defp cd_directories(directories, [], path) do
+    Map.put(directories, path, %{})
+  end
+
+  defp cd_directories(directories, current_path, path) do
+    update_in(directories, current_path, fn directories_in_path ->
+      Map.put_new(directories_in_path, path, %{})
+    end)
+  end
+
+  defp add_file(directories, [], file_name, size) do
+    Map.put(directories, file_name, String.to_integer(size))
+  end
+
+  defp add_file(directories, current_path, file_name, size) do
+    update_in(directories, current_path, fn directories_in_path ->
+      Map.put(directories_in_path, file_name, String.to_integer(size))
+    end)
+  end
+
+  defp calculate_size(directory, current_size) do
+    Enum.reduce(directory, current_size, fn {_key, value}, current_size ->
+      case value do
+        size when is_integer(size) ->
+          size + current_size
+
+        directory ->
+          calculate_size(directory, current_size)
+      end
+    end)
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day7Part2
+
+  test "example" do
+    input = """
+    $ cd /
+    $ ls
+    dir a
+    14848514 b.txt
+    8504156 c.dat
+    dir d
+    $ cd a
+    $ ls
+    dir e
+    29116 f
+    2557 g
+    62596 h.lst
+    $ cd e
+    $ ls
+    584 i
+    $ cd ..
+    $ cd ..
+    $ cd d
+    $ ls
+    4060174 j
+    8033020 d.log
+    5626152 d.ext
+    7214296 k
+    """
+
+    assert Day7Part2.run(input) === 24_933_642
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day7Part2
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day7Part2.run(input)
+  end
+end
+
+Puzzle.run()
+```

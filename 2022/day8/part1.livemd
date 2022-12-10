@@ -1,0 +1,183 @@
+# Day 8 Part 1
+
+```elixir
+Mix.install([])
+```
+
+## Part 1
+
+```elixir
+defmodule Day8Part1 do
+  # There must be a better way to do this...
+
+  def run(input) do
+    {trees_grid_layout, grid_width} = parse_trees_grid_layout(input)
+    axis_configurations = axis_configurations(grid_width)
+
+    Enum.reduce(
+      axis_configurations,
+      MapSet.new(),
+      &calculate_visible_tree(&1, &2, trees_grid_layout)
+    )
+    |> MapSet.size()
+  end
+
+  defp calculate_visible_tree(axis_configuration, visible_trees, trees_grid_layout) do
+    Enum.reduce(axis_configuration.second_axis.range, visible_trees, fn second_axis_current_index,
+                                                                        visible_trees ->
+      Enum.reduce_while(
+        axis_configuration.main_axis.range,
+        {-1, visible_trees},
+        fn first_axis_current_index, {current_tree_max_height, visible_trees} ->
+          {normalized_x_index, normalized_y_index} =
+            normalize_axis_indexes(
+              axis_configuration,
+              second_axis_current_index,
+              first_axis_current_index
+            )
+
+          tree_height = Map.get(trees_grid_layout, {normalized_x_index, normalized_y_index})
+          new_max_tree_height = max(tree_height, current_tree_max_height)
+
+          cond do
+            new_max_tree_height === 9 ->
+              # The trees after that cannot be seend ! We can stop looking ahead
+              {:halt, {9, MapSet.put(visible_trees, {normalized_x_index, normalized_y_index})}}
+
+            new_max_tree_height > current_tree_max_height ->
+              # The current tree is higher so it can be seen !
+              {:cont,
+               {new_max_tree_height,
+                MapSet.put(visible_trees, {normalized_x_index, normalized_y_index})}}
+
+            true ->
+              {:cont, {current_tree_max_height, visible_trees}}
+          end
+        end
+      )
+      |> elem(1)
+    end)
+  end
+
+  defp parse_trees_grid_layout(input) do
+    lines = String.split(input, "\n", trim: true)
+
+    grid_layout =
+      lines
+      |> Enum.with_index()
+      |> Enum.reduce(Map.new(), fn {line, current_x_index}, grid_layout ->
+        line
+        |> String.split("", trim: true)
+        |> Enum.with_index()
+        |> Enum.reduce(grid_layout, fn {tree_height, current_y_index}, grid_layout ->
+          tree_height = String.to_integer(tree_height)
+
+          Map.put(grid_layout, {current_x_index, current_y_index}, tree_height)
+        end)
+      end)
+
+    grid_width = lines |> Enum.at(0) |> String.length()
+
+    {grid_layout, grid_width}
+  end
+
+  defp normalize_axis_indexes(axis_configuration, second_axis_index, first_axis_index) do
+    case axis_configuration.main_axis.axis do
+      :x ->
+        {first_axis_index, second_axis_index}
+
+      :y ->
+        {second_axis_index, first_axis_index}
+    end
+  end
+
+  defp axis_configurations(grid_width) do
+    grid_width = grid_width - 1
+
+    [
+      %{
+        main_axis: %{
+          axis: :x,
+          range: 0..grid_width
+        },
+        second_axis: %{
+          axis: :y,
+          range: 0..grid_width
+        }
+      },
+      %{
+        main_axis: %{
+          axis: :x,
+          range: grid_width..0//-1
+        },
+        second_axis: %{
+          axis: :y,
+          range: 0..grid_width
+        }
+      },
+      %{
+        main_axis: %{
+          axis: :y,
+          range: 0..grid_width
+        },
+        second_axis: %{
+          axis: :x,
+          range: 0..grid_width
+        }
+      },
+      %{
+        main_axis: %{
+          axis: :y,
+          range: grid_width..0
+        },
+        second_axis: %{
+          axis: :x,
+          range: 0..grid_width
+        }
+      }
+    ]
+  end
+end
+```
+
+## Tests
+
+```elixir
+ExUnit.start(autorun: false)
+
+defmodule MyTest do
+  use ExUnit.Case, async: true
+
+  alias Day8Part1
+
+  test "example" do
+    input = """
+    30373
+    25512
+    65332
+    33549
+    35390
+    """
+
+    assert Day8Part1.run(input) === 21
+  end
+end
+
+ExUnit.run()
+```
+
+## Puzzle
+
+```elixir
+defmodule Puzzle do
+  alias Day8Part1
+
+  def run do
+    input = File.read!("#{__DIR__}/part1-input.txt")
+
+    Day8Part1.run(input)
+  end
+end
+
+Puzzle.run()
+```
